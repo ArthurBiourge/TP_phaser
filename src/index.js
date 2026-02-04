@@ -135,7 +135,13 @@ else{
  }
  if(gameOver){
    this.add.image( 400  ,  300  ,  "img_gameOver") ;
-   if(clavier.up)
+   this.add.text(16,16,"Rejouez : ↑",{fontSize:"32px",fill:"#FFF"})
+   if(clavier.up.isDown){
+    score =0;
+    gameOver=false;
+    this.scene.restart();
+    
+   }
   return;
  }
   
@@ -149,6 +155,7 @@ var score =0;
 var zone_texte_score;
 var groupe_bombes;
 var gameOver =false;
+var rejouer
 
 
 function ramasserEtoile(un_player, une_etoile){
