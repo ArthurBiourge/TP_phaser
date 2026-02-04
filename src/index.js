@@ -49,6 +49,10 @@ function preload() {
   frameWidth:32,
   frameHeight:48
  });
+ this.load.image("img_etoile","src/assets/star.png");
+ this.load.image("img_bombe", "src/assets/bomb.png");
+ this.load.image("img_gameOver", "src/assets/game_over.png");
+ 
 }
 
 /***********************************************************************/
@@ -87,11 +91,25 @@ function create() {
     repeat: -1
   })
   this.anims.create({
-    key:"anim_saute",
-    frames:this.anims.generateFrameNumbers("img_perso",{start:4,end:4}),
+    key:"anim_face",
+    frames:[{key:"img_perso",frame: 4 }],
     frameRate: 10,
-    repeat: -1
   })
+  groupe_etoiles=this.physics.add.group();
+  for(var i= 0; i<10;i++){
+    var coordX =70+70*i;
+    groupe_etoiles.create(coordX,10,"img_etoile");
+    this.physics.add.collider(groupe_etoiles,groupe_plateformes);
+  }
+  groupe_etoiles.children.iterate(function iterateur(etoile_i){
+    var coef_rebond =Phaser.Math.FloatBetween(0.4,0.8);
+    etoile_i.setBounceY(coef_rebond);
+  });
+  this.physics.add.overlap(player,groupe_etoiles,ramasserEtoile,null,this); 
+  zone_texte_score=this.add.text(16,16, "score: 0",{fontSize:"32px",fill:"#000"});
+  groupe_bombes=this.physics.add.group();
+  this.physics.add.collider(groupe_bombes,groupe_plateformes);
+  this.physics.add.collider(player,groupe_bombes,chocAvecBombe,null,this);
 }
 
 /***********************************************************************/
@@ -108,15 +126,59 @@ function update() {
   player.anims.play("anim_tourne_gauche",true)
  }
 
- else if(clavier.space.isDown && player.body.touching.down){
-  player.setVelocityY(-330);
-  player.anims.play("anim_saute",true)
- }
-  else{
+else{
   player.setVelocityX(0);
+  player.anims.play("anim_face");
  }
+ if(clavier.space.isDown && player.body.touching.down){
+  player.setVelocityY(-330);
+ }
+ if(gameOver){
+   this.add.image( 400  ,  300  ,  "img_gameOver") ;
+   if(clavier.up)
+  return;
+ }
+  
 }
   
 var groupe_plateformes ; 
-var player
+var player;
 var clavier;
+var groupe_etoiles;
+var score =0;
+var zone_texte_score;
+var groupe_bombes;
+var gameOver =false;
+
+
+function ramasserEtoile(un_player, une_etoile){
+  une_etoile.disableBody(true,true);
+ if(groupe_etoiles.countActive(true) == 0){
+        groupe_etoiles.children.iterate(function iterateur (etoile_i){
+            etoile_i.enableBody(true, etoile_i.x, 0, true, true);
+        });
+  
+  
+  var x;
+if (player.x < 400) {
+    x = Phaser.Math.Between(400, 800);
+} else {
+    x = Phaser.Math.Between(0, 400);
+}
+
+var une_bombe = groupe_bombes.create(x, 16, "img_bombe");
+une_bombe.setBounce(1);
+une_bombe.setCollideWorldBounds(true);
+une_bombe.setVelocity(Phaser.Math.Between(-200, 200), 2);
+une_bombe.allowGravity = false;}
+
+score +=10;
+zone_texte_score.setText("Score: "+score);
+
+}
+function chocAvecBombe(un_player, une_bombe){
+  this.physics.pause();
+  player.setTint(0xff0000);
+  player.anims.play("anim_face");
+  gameOver=true;
+}
